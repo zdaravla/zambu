@@ -26,9 +26,12 @@
   --accent:#4cc2b6; --on-accent:#04201d; --danger:#ff8a80; --ok:#7ddc94; color-scheme:dark } }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.35}
-.wrap{max-width:560px;margin:0 auto;padding-top:calc(12px + env(safe-area-inset-top, 0px));padding-bottom:calc(110px + env(safe-area-inset-bottom, 0px));
+body.pise nav{display:none}
+.wrap > *{width:100%;max-width:560px;margin-left:auto;margin-right:auto}
+html{-webkit-text-size-adjust:100%;height:100%;overflow:hidden}
+body{margin:0;height:100%;height:100dvh;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.35}
+.wrap{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;width:100%;
+  padding-top:calc(12px + env(safe-area-inset-top, 0px));padding-bottom:24px;
   padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
   display:flex;flex-direction:column;gap:14px}
 section{display:flex;flex-direction:column;gap:14px}
@@ -89,7 +92,7 @@ video,audio{max-width:100%}
 ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px;font-size:15px}
 a{color:var(--accent)}
 code{font-size:14px;overflow-wrap:anywhere}
-nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
+nav{flex:0 0 auto;background:var(--surface);border-top:1px solid var(--line);
   display:grid;grid-template-columns:repeat(3,1fr);z-index:5;
   padding-bottom:env(safe-area-inset-bottom, 0px);
   padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
@@ -208,7 +211,11 @@ nav button[aria-current=true]{color:var(--ink);border-top-color:var(--accent)}
 
 <script>
 "use strict";
-const VERZE="1.0 (10. 11. 2026)";
+const VERZE="1.1 (10. 11. 2026)";
+/* při psaní (klávesnice) skrýt spodní lištu, aby neskákala */
+const jePole=e=>e&&e.matches&&e.matches("input:not([type=file]):not([type=checkbox]),textarea,select");
+document.addEventListener("focusin",e=>{if(jePole(e.target))document.body.classList.add("pise")});
+document.addEventListener("focusout",()=>setTimeout(()=>{if(!jePole(document.activeElement))document.body.classList.remove("pise")},50));
 const DRUH=[["hovor","Hovor"],["schuzka","Schůzka"],["poznamka","Poznámka"]];
 const VELICINY=["délka úseku","výška budovy","římsa","atika"];
 /* co má obhlídka obsahovat podle účelu zakázky (štítky) */
@@ -561,7 +568,7 @@ function pocet(){const n=neodeslane().length;$("nav-n").hidden=!n;$("nav-n").tex
 let obrazovka="porizeni";
 function ukaz(s){obrazovka=s;for(const k of ["porizeni","prehled","export"])$("s-"+k).hidden=k!==s;
   document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.s===s));
-  mazat=null;uvolnit=false;vykresli();scrollTo(0,0)}
+  mazat=null;uvolnit=false;vykresli();document.querySelector('.wrap').scrollTop=0}
 function vykresli(){({porizeni:kresliPorizeni,prehled:kresliPrehled,export:kresliExport})[obrazovka]()}
 
 /* ---------- události ---------- */
