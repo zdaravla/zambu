@@ -6,6 +6,8 @@ Odesílá do soukromého repozitáře Infoc (`inbox/zambu/RRMMDD_HHMMSS/`, jeden
 
 Oblast Zakázky nabízí položky z číselníku Infoc `ciselniky/zakazky.json` (formát zakazky-1, řazení Živé, Nabídky, Usnulé); načítá se při spuštění a tlačítkem Obnovit zakázky, bez sítě platí poslední stažený. Novou zakázku z terénu aplikace zapíše bez čísla jako „NOVÁ objekt (klient)“, číslo přidělí PREZAK.
 
+Omylem přidanou oblast, položku nebo vlastní štítek lze odebrat (tlačítko Odebrat pod výběrem, dvojí potvrzení), jen pokud k nim není žádný záznam.
+
 Kód neobsahuje žádná osobní data ani klíč.
 
 ## Nasazení

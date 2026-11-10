@@ -117,6 +117,7 @@ nav button[aria-current=true]{color:var(--ink);border-top-color:var(--accent)}
     <div class="field">
       <span class="lbl" id="pol-lbl">Položka</span>
       <div class="row"><select id="polozka" aria-labelledby="pol-lbl"></select><button id="pol-nova" type="button" aria-label="Přidat položku">＋</button></div>
+      <button type="button" class="quiet" id="pol-pryc" hidden style="color:var(--danger);align-self:flex-start"></button>
     </div>
     <div id="nov-form" class="box" hidden>
       <span class="lbl" id="nov-lbl"></span>
@@ -125,7 +126,8 @@ nav button[aria-current=true]{color:var(--ink);border-top-color:var(--accent)}
       <div class="row"><button id="nov-uloz" type="button" class="primary" style="flex:1;font-size:17px;padding:12px">Přidat</button><button id="nov-zrus" type="button">Zrušit</button></div>
     </div>
     <div class="field"><span class="lbl">Druh</span><div class="chips" id="druh"></div></div>
-    <div class="field" id="stitek-pole"><span class="lbl">Štítek <small>(nepovinný)</small></span><div class="chips jemne" id="stitky"></div></div>
+    <div class="field" id="stitek-pole"><span class="lbl">Štítek <small>(nepovinný)</small></span><div class="chips jemne" id="stitky"></div>
+      <button type="button" class="quiet" id="stit-pryc" hidden style="color:var(--danger);align-self:flex-start"></button></div>
     <div class="chybi" id="chybi" hidden></div>
     <div class="field" id="mer-pole" hidden><span class="lbl">Měření <small>(mm)</small></span>
       <div class="row"><select id="velicina" aria-label="Co měřím"></select><input type="text" id="hodnota" inputmode="numeric" placeholder="mm" aria-label="Hodnota v mm" autocomplete="off" style="width:7em;flex:none"></div></div>
@@ -214,7 +216,7 @@ nav button[aria-current=true]{color:var(--ink);border-top-color:var(--accent)}
 
 <script>
 "use strict";
-const VERZE="1.4 (10. 11. 2026)";
+const VERZE="1.5 (10. 11. 2026)";
 /* při psaní (klávesnice) skrýt spodní lištu, aby neskákala */
 const jePole=e=>e&&e.matches&&e.matches("input:not([type=file]):not([type=checkbox]),textarea,select");
 document.addEventListener("focusin",e=>{if(jePole(e.target))document.body.classList.add("pise")});
@@ -241,7 +243,8 @@ function vychozi(){return {verze:1,
   ciselnik:{stazeno:"",vytvoreno:"",zakazky:[]}}}
 let S=vychozi(), TOKEN="";
 const ZAKL_OBL=["Fakulta","Zakázky","Administrativa","Prostředí","Lidé"];
-let mazatObl=null;
+let mazatObl=null, mazatPol=null, mazatStit=null;
+const zaklStitky=o=>((vychozi().oblasti.find(x=>x.nazev===o.nazev)||{stitky:[]}).stitky);
 let fot=[], zvuk=null, video=null, zrec=null, vrec=null, novy=null, mazat=null, ukladam=false, odesilam=false, uvolnit=false;
 const najdiObl=n=>S.oblasti.find(o=>o.nazev===n);
 const obl=()=>najdiObl(S.cur.oblast)||S.oblasti[0];
@@ -329,6 +332,15 @@ function kresliPorizeni(){
   if(!o.stitky.includes(S.cur.stitek))S.cur.stitek="";
   $("stitky").innerHTML=o.stitky.map(s=>`<button type="button" data-t="${esc(s)}" aria-pressed="${s===S.cur.stitek}">${esc(s)}</button>`).join("")
     +`<button type="button" data-t="" aria-label="Přidat štítek">＋</button>`;
+  /* odebrat lze ručně přidanou položku a vlastní štítek bez záznamů */
+  const pv=cp&&najdiPol(o,cp),lzePol=pv&&!pv.cis&&!S.zaznamy.some(x=>x.oblast===o.nazev&&x.polozka===cp);
+  if(mazatPol!==o.nazev+"|"+cp)mazatPol=null;
+  $("pol-pryc").hidden=!lzePol;
+  if(lzePol)$("pol-pryc").textContent=mazatPol?`Opravdu odebrat „${cp}“?`:`Odebrat „${cp}“`;
+  const st=S.cur.stitek,lzeStit=st&&!zaklStitky(o).includes(st)&&!S.zaznamy.some(x=>x.oblast===o.nazev&&x.stitek===st);
+  if(mazatStit!==o.nazev+"|"+st)mazatStit=null;
+  $("stit-pryc").hidden=!lzeStit;
+  if(lzeStit)$("stit-pryc").textContent=mazatStit?`Opravdu odebrat štítek „${st}“?`:`Odebrat štítek „${st}“`;
   $("velicina").innerHTML=VELICINY.map(v=>`<option${v===S.cur.velicina?" selected":""}>${v}</option>`).join("");
   $("mer-pole").hidden=S.cur.stitek!=="měření";$("okno-pole").hidden=S.cur.stitek!=="okno/dveře";
   $("hov-pole").hidden=S.cur.druh==="poznamka";
@@ -629,6 +641,16 @@ $("obl-pryc").onclick=async()=>{const o=obl();
   S.oblasti=S.oblasti.filter(x=>x!==o);delete S.cur.pol[o.nazev];S.cur.oblast=S.oblasti[0].nazev;mazatObl=null;novy=null;
   await zapis();toast("Oblast „"+o.nazev+"“ odebrána");kresliPorizeni()};
 $("polozka").onchange=e=>{S.cur.pol[S.cur.oblast]=e.target.value;zapis();kresliPorizeni()};
+$("pol-pryc").onclick=async()=>{const o=obl(),p=S.cur.pol[o.nazev]||"";if(!p)return;
+  if(S.zaznamy.some(x=>x.oblast===o.nazev&&x.polozka===p)){toast("Položka má záznamy – smažte je v Přehledu, nebo ji tam uzavřete",4500);return}
+  if(mazatPol!==o.nazev+"|"+p){mazatPol=o.nazev+"|"+p;kresliPorizeni();return}
+  o.polozky=o.polozky.filter(x=>x.nazev!==p);S.cur.pol[o.nazev]="";mazatPol=null;novy=null;
+  await zapis();toast("„"+p+"“ odebráno");kresliPorizeni()};
+$("stit-pryc").onclick=async()=>{const o=obl(),t=S.cur.stitek;if(!t)return;
+  if(S.zaznamy.some(x=>x.oblast===o.nazev&&x.stitek===t)){toast("Štítek má záznamy, nejde odebrat");return}
+  if(mazatStit!==o.nazev+"|"+t){mazatStit=o.nazev+"|"+t;kresliPorizeni();return}
+  o.stitky=o.stitky.filter(x=>x!==t);S.cur.stitek="";mazatStit=null;novy=null;
+  await zapis();toast("Štítek „"+t+"“ odebrán");kresliPorizeni()};
 $("pol-nova").onclick=()=>{novy=novy==="polozka"?null:"polozka";kresliPorizeni();if(novy)$("nov-nazev").focus()};
 $("nov-uloz").onclick=pridejNove;
 $("nov-nazev").onkeydown=e=>{if(e.key==="Enter")pridejNove()};
