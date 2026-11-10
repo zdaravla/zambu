@@ -1,5 +1,5 @@
 /* ZAMBU – offline provoz. Při změně aplikace zvyšte číslo verze. */
-const CACHE = "zambu-v4";
+const CACHE = "zambu-v5";
 const SOUBORY = ["./", "index.html", "manifest.webmanifest", "ikona-180.png", "ikona-192.png", "ikona-512.png"];
 
 self.addEventListener("install", e => {

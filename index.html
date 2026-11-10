@@ -112,7 +112,8 @@ nav button[aria-current=true]{color:var(--ink);border-top-color:var(--accent)}
   <!-- POŘÍDIT -->
   <section id="s-porizeni">
     <button type="button" class="banner" id="banner" hidden></button>
-    <div class="field"><span class="lbl">Oblast</span><div class="chips" id="oblasti"></div></div>
+    <div class="field"><span class="lbl">Oblast</span><div class="chips" id="oblasti"></div>
+      <button type="button" class="quiet" id="obl-pryc" hidden style="color:var(--danger);align-self:flex-start"></button></div>
     <div class="field">
       <span class="lbl" id="pol-lbl">Položka</span>
       <div class="row"><select id="polozka" aria-labelledby="pol-lbl"></select><button id="pol-nova" type="button" aria-label="Přidat položku">＋</button></div>
@@ -213,7 +214,7 @@ nav button[aria-current=true]{color:var(--ink);border-top-color:var(--accent)}
 
 <script>
 "use strict";
-const VERZE="1.3 (10. 11. 2026)";
+const VERZE="1.4 (10. 11. 2026)";
 /* při psaní (klávesnice) skrýt spodní lištu, aby neskákala */
 const jePole=e=>e&&e.matches&&e.matches("input:not([type=file]):not([type=checkbox]),textarea,select");
 document.addEventListener("focusin",e=>{if(jePole(e.target))document.body.classList.add("pise")});
@@ -239,6 +240,8 @@ function vychozi(){return {verze:1,
   infoc:{repo:"zdaravla/infoc",overeno:"",platnost:""},
   ciselnik:{stazeno:"",vytvoreno:"",zakazky:[]}}}
 let S=vychozi(), TOKEN="";
+const ZAKL_OBL=["Fakulta","Zakázky","Administrativa","Prostředí","Lidé"];
+let mazatObl=null;
 let fot=[], zvuk=null, video=null, zrec=null, vrec=null, novy=null, mazat=null, ukladam=false, odesilam=false, uvolnit=false;
 const najdiObl=n=>S.oblasti.find(o=>o.nazev===n);
 const obl=()=>najdiObl(S.cur.oblast)||S.oblasti[0];
@@ -310,6 +313,11 @@ function kresliPorizeni(){
   const o=obl();S.cur.oblast=o.nazev;
   $("oblasti").innerHTML=S.oblasti.map(x=>`<button type="button" data-o="${esc(x.nazev)}" aria-pressed="${x===o}">${esc(x.nazev)}</button>`).join("")
     +`<button type="button" data-o="" aria-label="Přidat oblast">＋</button>`;
+  /* odebrat lze jen vlastní oblast bez záznamů */
+  const lzeOdebrat=!ZAKL_OBL.includes(o.nazev)&&S.oblasti.length>1&&!S.zaznamy.some(x=>x.oblast===o.nazev);
+  if(mazatObl!==o.nazev)mazatObl=null;
+  $("obl-pryc").hidden=!lzeOdebrat;
+  if(lzeOdebrat)$("obl-pryc").textContent=mazatObl?`Opravdu odebrat oblast „${o.nazev}“?`:`Odebrat oblast „${o.nazev}“`;
   const otevrene=polozkyObl(o).filter(p=>!p.uzavrena);
   let cp=S.cur.pol[o.nazev]||"";if(!otevrene.some(p=>p.nazev===cp))cp=S.cur.pol[o.nazev]="";
   $("pol-lbl").textContent=o.nazev==="Zakázky"?"Zakázka":o.nazev==="Lidé"?"Osoba":"Položka";
@@ -615,6 +623,11 @@ $("banner").onclick=()=>ukaz("export");
 $("oblasti").onclick=e=>{const b=e.target.closest("button");if(!b)return;
   if(!b.dataset.o){novy=novy==="oblast"?null:"oblast";kresliPorizeni();if(novy)$("nov-nazev").focus();return}
   S.cur.oblast=b.dataset.o;novy=null;zapis();kresliPorizeni()};
+$("obl-pryc").onclick=async()=>{const o=obl();
+  if(S.zaznamy.some(x=>x.oblast===o.nazev)){toast("Oblast má záznamy, nejde odebrat");return}
+  if(mazatObl!==o.nazev){mazatObl=o.nazev;kresliPorizeni();return}
+  S.oblasti=S.oblasti.filter(x=>x!==o);delete S.cur.pol[o.nazev];S.cur.oblast=S.oblasti[0].nazev;mazatObl=null;novy=null;
+  await zapis();toast("Oblast „"+o.nazev+"“ odebrána");kresliPorizeni()};
 $("polozka").onchange=e=>{S.cur.pol[S.cur.oblast]=e.target.value;zapis();kresliPorizeni()};
 $("pol-nova").onclick=()=>{novy=novy==="polozka"?null:"polozka";kresliPorizeni();if(novy)$("nov-nazev").focus()};
 $("nov-uloz").onclick=pridejNove;
