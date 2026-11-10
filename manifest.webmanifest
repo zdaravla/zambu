@@ -1,0 +1,17 @@
+{
+  "name": "ZAMBU – pořizovač záznamů",
+  "short_name": "ZAMBU",
+  "description": "Fotky, poznámky, zvuk, video a měření v terénu; odesílá do Infoc.",
+  "lang": "cs",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef1f0",
+  "theme_color": "#0c6b63",
+  "icons": [
+    { "src": "ikona-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "ikona-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "ikona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

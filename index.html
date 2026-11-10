@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ZAMBU</title>
+<meta name="theme-color" content="#0c6b63">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ZAMBU">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="ikona-180.png">
+<link rel="icon" href="ikona-192.png">
+<style>
+/* Telefon, jedna ruka: nahoře stav, uprostřed jedna obrazovka, dole tři záložky. */
+:root{
+  --bg:#eef1f0; --surface:#fbfcfc; --ink:#16211f; --muted:#5b6866; --line:#cdd5d3;
+  --accent:#0c6b63; --on-accent:#ffffff; --warn:#f2c230; --on-warn:#2a2200; --danger:#b3261e; --ok:#1d7a3a;
+  --body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --label:"Avenir Next Condensed","Roboto Condensed","Arial Narrow",-apple-system,system-ui,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){ :root{
+  --bg:#101615; --surface:#19211f; --ink:#e7eeec; --muted:#9aa8a5; --line:#33403d;
+  --accent:#4cc2b6; --on-accent:#04201d; --danger:#ff8a80; --ok:#7ddc94; color-scheme:dark } }
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.35}
+.wrap{max-width:560px;margin:0 auto;padding-top:calc(12px + env(safe-area-inset-top, 0px));padding-bottom:calc(110px + env(safe-area-inset-bottom, 0px));
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  display:flex;flex-direction:column;gap:14px}
+section{display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{font-family:var(--label);font-weight:700;font-size:26px;letter-spacing:.05em;margin:0}
+h2{font-family:var(--label);font-weight:600;font-size:19px;letter-spacing:.06em;text-transform:uppercase;margin:6px 0 0}
+#gps{font-size:14px;color:var(--muted);text-align:right}
+.lbl{font-family:var(--label);font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lbl small{text-transform:none;letter-spacing:0;font-family:var(--body);font-weight:400;font-size:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;gap:8px;align-items:stretch}
+.row > *{min-width:0}
+select,input[type=text],input[type=password],input[type=date],textarea{font:inherit;font-size:17px;color:var(--ink);background:var(--surface);border:1px solid var(--line);
+  border-radius:6px;padding:12px;width:100%}
+textarea{min-height:120px;resize:vertical}
+button{font:inherit;font-weight:600;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  padding:12px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible,label.btn:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.4;cursor:default}
+.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-size:20px;padding:16px}
+.quiet{background:none;border:none;color:var(--accent);padding:8px 4px;font-weight:500}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chips button{padding:12px 2px;font-weight:500;font-size:15px;overflow-wrap:anywhere}
+.chips button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chips.jemne button{padding:8px 2px;border-style:dashed}
+.chips.jemne button[aria-pressed=true]{border-style:solid}
+label.btn{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:19px;border-radius:6px;
+  border:2px dashed var(--accent);color:var(--accent);background:var(--surface);padding:18px 10px;cursor:pointer;flex:1;text-align:center}
+label.btn input{position:absolute;opacity:0;width:1px;height:1px}
+.rec-btn{flex:1;border:2px dashed var(--accent);color:var(--accent);font-size:17px;padding:14px 8px}
+.rec-btn.on{background:var(--danger);border-color:var(--danger);border-style:solid;color:#fff}
+#nahled{display:flex;flex-wrap:wrap;gap:12px;padding-top:6px}
+.nf{position:relative}
+.nf img{width:84px;height:84px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block}
+.nf button{position:absolute;top:-8px;right:-8px;padding:2px 10px;border-radius:99px;background:var(--ink);color:var(--bg);border:none}
+video,audio{max-width:100%}
+.small{font-size:14px;color:var(--muted)}
+.chybi{font-size:15px;padding:8px 10px;border-radius:6px;background:var(--surface);border:1px dashed var(--line)}
+.chybi b{color:var(--danger);font-weight:600}
+.banner{display:block;width:100%;text-align:left;background:var(--warn);color:var(--on-warn);border:none;font-weight:600;font-size:16px}
+.day{font-family:var(--label);font-size:18px;font-weight:600;letter-spacing:.05em;border-bottom:2px solid var(--ink);padding-bottom:2px;margin-top:6px}
+.rec{display:grid;grid-template-columns:72px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.rec > div{min-width:0;display:flex;flex-direction:column;gap:4px}
+.th{width:72px;height:72px;border-radius:6px;background:var(--surface);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;text-align:center;object-fit:cover;padding:0}
+.meta{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.txt{white-space:pre-wrap;overflow-wrap:anywhere}
+.tag{font-family:var(--label);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.pill{background:var(--warn);color:var(--on-warn);border-radius:99px;padding:0 8px;font-size:13px;font-weight:600}
+.pill.ok{background:none;color:var(--ok);padding:0}
+.akce{display:flex;flex-wrap:wrap;gap:6px 16px}
+.akce button{border:none;background:none;padding:4px 0;font-weight:500;font-size:15px;color:var(--accent)}
+.akce .del{color:var(--danger)}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.note{border-left:4px solid var(--warn);padding:6px 10px;font-size:15px;background:var(--surface)}
+.stav-ok{color:var(--ok);font-weight:600}
+.stav-chyba{color:var(--danger);font-weight:600}
+ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:4px;font-size:15px}
+a{color:var(--accent)}
+code{font-size:14px;overflow-wrap:anywhere}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(3,1fr);z-index:5;
+  padding-bottom:env(safe-area-inset-bottom, 0px);
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+nav button{border:none;border-radius:0;background:none;padding:16px 4px;font-family:var(--label);font-weight:600;font-size:19px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);border-top:4px solid transparent}
+nav button[aria-current=true]{color:var(--ink);border-top-color:var(--accent)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom, 0px));z-index:6;
+  background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:600;max-width:90%;text-align:center}
+#lupa{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9;display:flex;align-items:center;justify-content:center;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+#lupa img{max-width:100%;max-height:100%;object-fit:contain}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>ZAMBU</h1><div id="gps">GPS: hledám…</div></header>
+
+  <!-- POŘÍDIT -->
+  <section id="s-porizeni">
+    <button type="button" class="banner" id="banner" hidden></button>
+    <div class="field"><span class="lbl">Oblast</span><div class="chips" id="oblasti"></div></div>
+    <div class="field">
+      <span class="lbl" id="pol-lbl">Položka</span>
+      <div class="row"><select id="polozka" aria-labelledby="pol-lbl"></select><button id="pol-nova" type="button" aria-label="Přidat položku">＋</button></div>
+    </div>
+    <div id="nov-form" class="box" hidden>
+      <span class="lbl" id="nov-lbl"></span>
+      <input type="text" id="nov-nazev" autocomplete="off" aria-labelledby="nov-lbl">
+      <div class="row" id="nov-ucel-row"><span class="small" style="align-self:center">Účel</span><select id="nov-ucel" aria-label="Účel zakázky"><option>PENB</option><option>studie</option><option>audit</option><option>dotace</option><option value="">jiný</option></select></div>
+      <div class="row"><button id="nov-uloz" type="button" class="primary" style="flex:1;font-size:17px;padding:12px">Přidat</button><button id="nov-zrus" type="button">Zrušit</button></div>
+    </div>
+    <div class="field"><span class="lbl">Druh</span><div class="chips" id="druh"></div></div>
+    <div class="field" id="stitek-pole"><span class="lbl">Štítek <small>(nepovinný)</small></span><div class="chips jemne" id="stitky"></div></div>
+    <div class="chybi" id="chybi" hidden></div>
+    <div class="field" id="mer-pole" hidden><span class="lbl">Měření <small>(m)</small></span>
+      <div class="row"><select id="velicina" aria-label="Co měřím"></select><input type="text" id="hodnota" inputmode="decimal" placeholder="0,00" aria-label="Hodnota v metrech" autocomplete="off" style="width:7em;flex:none"></div></div>
+    <div class="field" id="okno-pole" hidden><span class="lbl">Okno <small>(mm)</small></span>
+      <div class="row" style="align-items:center"><input type="text" id="sirka" inputmode="numeric" placeholder="šířka" aria-label="Šířka v mm" autocomplete="off"><span>×</span><input type="text" id="vyska" inputmode="numeric" placeholder="výška" aria-label="Výška v mm" autocomplete="off"></div></div>
+    <div class="field" id="hov-pole" hidden><span class="lbl">S kým a termín <small>(nepovinné)</small></span>
+      <div class="row"><input type="text" id="osoba" list="lide" placeholder="s kým" aria-label="S kým" autocomplete="off"><datalist id="lide"></datalist><input type="date" id="termin" aria-label="Termín" style="width:auto;flex:none"></div></div>
+    <div class="field">
+      <span class="lbl">Fotky a video <small>(nepovinné)</small></span>
+      <div class="row">
+        <label class="btn"><span id="foto-txt">Vyfotit</span><input type="file" id="foto-kamera" accept="image/*" capture="environment"></label>
+      </div>
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <label class="quiet" style="cursor:pointer">fotky z galerie<input type="file" id="foto-galerie" accept="image/*" multiple hidden></label>
+        <label class="small">delší strana <select id="velikost" style="width:auto;padding:6px;font-size:15px"><option>800</option><option>1280</option><option>1920</option></select> px</label>
+      </div>
+      <div id="nahled" hidden></div>
+      <div class="row" style="align-items:center"><button type="button" id="video-btn" class="rec-btn">● Natočit video</button><label class="quiet" style="cursor:pointer">ze souboru<input type="file" id="video-soubor" accept="video/*" hidden></label></div>
+      <video id="video-zive" muted playsinline hidden style="width:100%;border-radius:6px"></video>
+      <div id="video-box" hidden><video id="video-nahled" controls playsinline style="width:100%;border-radius:6px"></video>
+        <div class="row" style="justify-content:space-between;align-items:center"><span class="small" id="video-info"></span><button type="button" class="quiet" id="video-pryc" style="color:var(--danger)">Odebrat video</button></div></div>
+    </div>
+    <div class="field">
+      <span class="lbl">Poznámka <small>(diktujte mikrofonem klávesnice)</small></span>
+      <textarea id="text" placeholder="Kdo, co chce, co jsem slíbil, k jaké verzi…"></textarea>
+      <div class="row" style="align-items:center"><button type="button" id="zvuk-btn" class="rec-btn">● Nahrát zvuk</button><label class="quiet" style="cursor:pointer">ze souboru<input type="file" id="zvuk-soubor" accept="audio/*" hidden></label></div>
+      <div id="zvuk-box" class="row" style="align-items:center" hidden><audio id="zvuk-audio" controls style="flex:1;min-width:0"></audio><button type="button" class="quiet" id="zvuk-pryc" style="color:var(--danger)">Odebrat</button></div>
+    </div>
+    <button class="primary" id="uloz" type="button" disabled>Uložit záznam</button>
+    <div class="small">Stačí fotka, poznámka, zvuk, video nebo měření. Čas a GPS se zapíšou samy.</div>
+  </section>
+
+  <!-- PŘEHLED -->
+  <section id="s-prehled" hidden>
+    <div class="row"><select id="filtr" aria-label="Filtr"></select><button id="pol-uzavrit" type="button" hidden>Uzavřít</button></div>
+    <div id="seznam"></div>
+  </section>
+
+  <!-- ODESLAT -->
+  <section id="s-export" hidden>
+    <div id="exp-stav"></div>
+    <button class="primary" id="odeslat" type="button">Odeslat do Infoc</button>
+    <div id="odes-stav" class="small" role="status"></div>
+    <div class="note" id="instalace" hidden>Přidejte ZAMBU na plochu (v Safari Sdílet → Přidat na plochu). Jinak může Safari data stránky po 7 dnech bez použití smazat.</div>
+
+    <h2>Záloha</h2>
+    <div class="row"><button id="zip-neodes" type="button" style="flex:1">ZIP neodeslaných</button><button id="zip-vse" type="button" style="flex:1">ZIP všeho</button></div>
+    <div class="small">ZIP obsahuje <code>zaznamy.json</code>, <code>zaznamy.csv</code> a fotky, zvuk a video. Pošlete ho sdílením na Drive, mailem nebo do chatu.</div>
+
+    <h2>Místo v telefonu</h2>
+    <div id="misto" class="small"></div>
+    <button id="uvolnit" type="button">Smazat média odeslaných záznamů</button>
+
+    <h2>Spojení s Infoc</h2>
+    <div class="box">
+      <div class="field"><label class="lbl" for="repo">Repozitář</label><input type="text" id="repo" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="field"><label class="lbl" for="token">Klíč (fine-grained token)</label>
+        <input type="password" id="token" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…"></div>
+      <div class="row"><button id="token-uloz" type="button" style="flex:1">Uložit a ověřit</button><button id="token-smaz" type="button" class="quiet" style="color:var(--danger)">Smazat klíč</button></div>
+      <div id="spojeni" class="small" role="status"></div>
+      <details>
+        <summary class="small" style="cursor:pointer">Jak vytvořit klíč</summary>
+        <ol style="margin-top:8px">
+          <li>Na počítači otevřete <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.</li>
+          <li>Název ZAMBU, platnost 90 dní.</li>
+          <li>Repository access: Only select repositories → <code>infoc</code>.</li>
+          <li>Permissions → Repository → Contents: Read and write. Nic dalšího.</li>
+          <li>Vytvořit, zkopírovat a vložit sem (přes AirDrop nebo poznámku, ne mailem).</li>
+        </ol>
+      </details>
+    </div>
+    <div id="historie"></div>
+    <div class="small" id="verze"></div>
+  </section>
+</div>
+
+<nav>
+  <button data-s="porizeni" aria-current="true">Pořídit</button>
+  <button data-s="prehled">Přehled</button>
+  <button data-s="export">Odeslat <span class="pill" id="nav-n" hidden></span></button>
+</nav>
+<div id="toast" hidden role="status"></div>
+<div id="lupa" hidden><img id="lupa-img" alt="Fotka"></div>
+
+<script>
+"use strict";
+const VERZE="1.0 (10. 11. 2026)";
+const DRUH=[["hovor","Hovor"],["schuzka","Schůzka"],["poznamka","Poznámka"]];
+const VELICINY=["délka úseku","výška budovy","římsa","atika"];
+/* co má obhlídka obsahovat podle účelu zakázky (štítky) */
+const CHECKLIST={PENB:["fasáda","okno/dveře","měření","zdroj/TZB"],studie:["fasáda","měření","místnost","závada"],
+  audit:["fasáda","okno/dveře","měření","zdroj/TZB","místnost","závada"],dotace:["fasáda","okno/dveře","měření","zdroj/TZB"]};
+const MAX_VIDEO=40*1048576;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const P=(nazev,ucel)=>({nazev,ucel:ucel||"",uzavrena:false});
+function vychozi(){return {verze:1,
+  oblasti:[
+   {nazev:"Fakulta",stitky:["výuka","zkouška","student","katedra"],polozky:[P("PSA3"),P("BC01"),P("SDP4")]},
+   {nazev:"Zakázky",stitky:["fasáda","okno/dveře","místnost","zdroj/TZB","závada","měření"],polozky:[]},
+   {nazev:"Administrativa",stitky:["doklad","úřad","platba"],polozky:[]},
+   {nazev:"Prostředí",stitky:["nástroj","nápad","problém"],polozky:[]},
+   {nazev:"Lidé",stitky:["slib","kontakt"],polozky:[]}],
+  zaznamy:[],pocitadla:{},odeslani:[],
+  cur:{oblast:"Zakázky",pol:{},druh:"poznamka",stitek:"",velikost:"1280",velicina:VELICINY[0]},
+  infoc:{repo:"zdaravla/infoc",overeno:"",platnost:""}}}
+let S=vychozi(), TOKEN="";
+let fot=[], zvuk=null, video=null, zrec=null, vrec=null, novy=null, mazat=null, ukladam=false, odesilam=false, uvolnit=false;
+const najdiObl=n=>S.oblasti.find(o=>o.nazev===n);
+const obl=()=>najdiObl(S.cur.oblast)||S.oblasti[0];
+
+/* ---------- úložiště: IndexedDB (kv = stav, media = soubory) ---------- */
+let db=null;
+function otevriDB(){return new Promise(r=>{try{const q=indexedDB.open("zambu",1);
+  q.onupgradeneeded=()=>{const d=q.result;if(!d.objectStoreNames.contains("kv"))d.createObjectStore("kv");if(!d.objectStoreNames.contains("media"))d.createObjectStore("media")};
+  q.onsuccess=()=>{db=q.result;r(true)};q.onerror=()=>r(false);q.onblocked=()=>r(false)}catch(e){r(false)}})}
+function tx(store,mode,fn){return new Promise((res,rej)=>{
+  if(!db)return rej(new Error("úložiště telefonu není dostupné"));
+  let t;try{t=db.transaction(store,mode)}catch(e){return rej(e)}
+  let out;const q=fn(t.objectStore(store));if(q)q.onsuccess=()=>{out=q.result};
+  t.oncomplete=()=>res(out);t.onerror=()=>rej(t.error||new Error("chyba úložiště"));t.onabort=()=>rej(t.error||new Error("zápis přerušen (plné úložiště?)"))})}
+const kvGet=k=>tx("kv","readonly",s=>s.get(k));
+const kvSet=(k,v)=>tx("kv","readwrite",s=>s.put(v,k));
+const mGet=k=>tx("media","readonly",s=>s.get(k));
+const mSet=(k,v)=>tx("media","readwrite",s=>s.put(v,k));
+const mDel=k=>tx("media","readwrite",s=>s.delete(k));
+async function zapis(){try{await kvSet("stav",S);return true}catch(e){toast("Uložení selhalo: "+e.message);return false}}
+async function trvale(){try{if(navigator.storage&&navigator.storage.persist&&!(await navigator.storage.persisted()))await navigator.storage.persist()}catch(e){}}
+
+/* ---------- pomocné ---------- */
+function prahaISO(d=new Date()){
+  const f=new Intl.DateTimeFormat("en-GB",{timeZone:"Europe/Prague",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23"});
+  const p={};for(const x of f.formatToParts(d))p[x.type]=x.value;
+  const off=Math.round((Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute,+p.second)-Math.floor(d.getTime()/1000)*1000)/60000);
+  const a=Math.abs(off);
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}${off>=0?"+":"-"}${String(Math.floor(a/60)).padStart(2,"0")}:${String(a%60).padStart(2,"0")}`}
+const razitko=iso=>iso.slice(2,4)+iso.slice(5,7)+iso.slice(8,10)+"_"+iso.slice(11,13)+iso.slice(14,16)+iso.slice(17,19);
+const datumCZ=iso=>iso.slice(0,10).split("-").reverse().map(Number).join(". ");
+function uuid(){return crypto.randomUUID?crypto.randomUUID():"r"+Date.now().toString(16)+Math.random().toString(16).slice(2)}
+function slug(s){return String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,"").slice(0,40)||"x"}
+function pripona(typ,druh){typ=typ||"";
+  if(typ.includes("quicktime"))return ".mov";if(typ.includes("webm"))return ".webm";if(typ.includes("ogg"))return ".ogg";
+  if(typ.includes("mpeg"))return ".mp3";if(typ.includes("wav"))return ".wav";if(typ.includes("aac"))return ".aac";
+  if(typ.includes("mp4")||typ.includes("m4a"))return druh==="audio"?".m4a":".mp4";return druh==="audio"?".m4a":".mp4"}
+const mb=n=>(n/1048576).toFixed(1).replace(".",",")+" MB";
+function toast(t,ms){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,ms||2600)}
+const neodeslane=()=>S.zaznamy.filter(x=>!x.odeslano);
+const zaz=n=>n+" "+(n===1?"záznam":n>=2&&n<=4?"záznamy":"záznamů");
+const zazG=n=>n+" "+(n===1?"záznamu":"záznamů");
+const maMedia=x=>x.fotky.length>0||!!x.zvuk||!!x.video;
+
+/* ---------- GPS ---------- */
+let fix=null, gpsStav="hledám…", watchId=null;
+function gpsStart(){
+  if(!("geolocation" in navigator)){gpsStav="nedostupná";ukazGps();return}
+  if(watchId!==null)return;
+  try{watchId=navigator.geolocation.watchPosition(p=>{
+      fix={lat:+p.coords.latitude.toFixed(6),lon:+p.coords.longitude.toFixed(6),presnost:Math.round(p.coords.accuracy),t:Date.now()};ukazGps()},
+    e=>{gpsStav=e.code===1?"zakázaná":"bez signálu";ukazGps()},{enableHighAccuracy:true,maximumAge:20000,timeout:30000})}catch(e){gpsStav="nedostupná";ukazGps()}}
+function gpsStop(){if(watchId!==null){try{navigator.geolocation.clearWatch(watchId)}catch(e){}watchId=null}}
+const gpsNyni=()=>fix&&Date.now()-fix.t<120000?fix:null;
+function ukazGps(){const g=gpsNyni();$("gps").textContent=g?"GPS ±"+g.presnost+" m":"GPS: "+(fix&&gpsStav==="hledám…"?"stará poloha":gpsStav)}
+setInterval(ukazGps,15000);
+document.addEventListener("visibilitychange",()=>{if(document.hidden){if(!vrec&&!zrec)gpsStop()}else{gpsStart();vykresli()}});
+
+/* ---------- POŘÍDIT ---------- */
+function kresliPorizeni(){
+  const o=obl();S.cur.oblast=o.nazev;
+  $("oblasti").innerHTML=S.oblasti.map(x=>`<button type="button" data-o="${esc(x.nazev)}" aria-pressed="${x===o}">${esc(x.nazev)}</button>`).join("")
+    +`<button type="button" data-o="" aria-label="Přidat oblast">＋</button>`;
+  const otevrene=o.polozky.filter(p=>!p.uzavrena);
+  let cp=S.cur.pol[o.nazev]||"";if(!otevrene.some(p=>p.nazev===cp))cp=S.cur.pol[o.nazev]="";
+  $("pol-lbl").textContent=o.nazev==="Zakázky"?"Zakázka":o.nazev==="Lidé"?"Osoba":"Položka";
+  $("polozka").innerHTML=`<option value="">— obecně, bez položky —</option>`+otevrene.map(p=>`<option value="${esc(p.nazev)}"${p.nazev===cp?" selected":""}>${esc(p.nazev)}${p.ucel?" · "+esc(p.ucel):""}</option>`).join("");
+  $("druh").innerHTML=DRUH.map(([k,n])=>`<button type="button" data-d="${k}" aria-pressed="${k===S.cur.druh}">${n}</button>`).join("");
+  if(!o.stitky.includes(S.cur.stitek))S.cur.stitek="";
+  $("stitky").innerHTML=o.stitky.map(s=>`<button type="button" data-t="${esc(s)}" aria-pressed="${s===S.cur.stitek}">${esc(s)}</button>`).join("")
+    +`<button type="button" data-t="" aria-label="Přidat štítek">＋</button>`;
+  $("velicina").innerHTML=VELICINY.map(v=>`<option${v===S.cur.velicina?" selected":""}>${v}</option>`).join("");
+  $("mer-pole").hidden=S.cur.stitek!=="měření";$("okno-pole").hidden=S.cur.stitek!=="okno/dveře";
+  $("hov-pole").hidden=S.cur.druh==="poznamka";
+  $("lide").innerHTML=(najdiObl("Lidé")||{polozky:[]}).polozky.map(p=>`<option value="${esc(p.nazev)}"></option>`).join("");
+  $("velikost").value=S.cur.velikost;
+  /* checklist obhlídky */
+  const pol=cp&&o.polozky.find(p=>p.nazev===cp), ch=pol&&CHECKLIST[pol.ucel];
+  if(ch){const ma=new Set(S.zaznamy.filter(x=>x.oblast===o.nazev&&x.polozka===cp).map(x=>x.stitek));
+    const chybi=ch.filter(s=>!ma.has(s));
+    $("chybi").innerHTML=chybi.length?`${esc(pol.ucel)} – ještě chybí: <b>${chybi.map(esc).join(", ")}</b>`:`${esc(pol.ucel)} – vše z kontrolního seznamu je pořízeno.`;
+    $("chybi").hidden=false}else $("chybi").hidden=true;
+  /* formulář přidání */
+  $("nov-form").hidden=!novy;
+  if(novy){$("nov-lbl").textContent=novy==="oblast"?"Nová oblast":novy==="stitek"?"Nový štítek v oblasti "+o.nazev:(o.nazev==="Zakázky"?"Nová zakázka (číslo akce a název)":"Nová položka v oblasti "+o.nazev);
+    $("nov-nazev").placeholder=novy==="polozka"&&o.nazev==="Zakázky"?"např. 2026_220 Mladých 211":"";
+    $("nov-ucel-row").hidden=!(novy==="polozka"&&o.nazev==="Zakázky")}
+  banner();stavUloz();
+}
+function banner(){const n=neodeslane();const st=n.length&&(Date.now()-Date.parse(n[0].cas))>12*3600e3;
+  $("banner").hidden=!st;if(st)$("banner").textContent=`Na odeslání do Infoc čeká ${zaz(n.length)} ›`}
+function cislo(id){const v=parseFloat($(id).value.replace(/\s/g,"").replace(",","."));return isFinite(v)?v:""}
+function udaje(){const d={velicina:"",hodnota_m:"",sirka_mm:"",vyska_mm:"",osoba:"",termin:""};
+  if(S.cur.stitek==="měření"){d.hodnota_m=cislo("hodnota");if(d.hodnota_m!=="")d.velicina=$("velicina").value}
+  if(S.cur.stitek==="okno/dveře"){d.sirka_mm=cislo("sirka");d.vyska_mm=cislo("vyska")}
+  if(S.cur.druh!=="poznamka"){d.osoba=$("osoba").value.trim();d.termin=$("termin").value}
+  return d}
+function stavUloz(){
+  const t=$("text").value.trim(),d=udaje(),okno=d.sirka_mm!==""||d.vyska_mm!=="",cis=d.hodnota_m!==""||okno,f=fot.length;
+  $("uloz").disabled=ukladam||!!zrec||!!vrec||!(f||t||cis||zvuk||video);
+  const co=[];if(f)co.push(f>1?f+" fotky":"fotku");if(video)co.push("video");if(zvuk)co.push("zvuk");if(t)co.push("poznámku");if(okno)co.push("rozměr okna");else if(d.hodnota_m!=="")co.push("měření");
+  $("uloz").textContent=co.length?"Uložit "+co.join(" + "):"Uložit záznam";
+}
+function kresliFotky(){$("foto-txt").textContent=fot.length?"Další fotka":"Vyfotit";$("nahled").hidden=!fot.length;
+  $("nahled").innerHTML=fot.map((x,i)=>`<div class="nf"><img src="${x.url}" alt="Fotka ${i+1}"><button type="button" data-fi="${i}" aria-label="Odebrat fotku ${i+1}">×</button></div>`).join("");stavUloz()}
+function zmensi(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const max=+S.cur.velikost,k=Math.min(1,max/Math.max(im.naturalWidth,im.naturalHeight));
+    const c=document.createElement("canvas");c.width=Math.max(1,Math.round(im.naturalWidth*k));c.height=Math.max(1,Math.round(im.naturalHeight*k));
+    c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);
+    c.toBlob(b=>b?res(b):rej(new Error("fotku nejde převést")),"image/jpeg",0.72)};
+  im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error("fotku nejde načíst"))};im.src=u})}
+async function pridejFotky(files){for(const f of files){try{const b=await zmensi(f);fot.push({blob:b,url:URL.createObjectURL(b)})}catch(e){toast("Fotka: "+e.message)}}kresliFotky()}
+function nastavZvuk(b){if(zvuk)URL.revokeObjectURL(zvuk.url);zvuk=b?{blob:b,url:URL.createObjectURL(b)}:null;
+  $("zvuk-box").hidden=!zvuk;if(zvuk)$("zvuk-audio").src=zvuk.url;else $("zvuk-audio").removeAttribute("src");kresliRec()}
+function nastavVideo(b){if(video)URL.revokeObjectURL(video.url);video=b?{blob:b,url:URL.createObjectURL(b)}:null;
+  $("video-box").hidden=!video;if(video){$("video-nahled").src=video.url;$("video-info").textContent=mb(video.blob.size)}else $("video-nahled").removeAttribute("src");kresliRec()}
+function kresliRec(){
+  $("zvuk-btn").textContent=zrec?"■ Stop – nahrávám":zvuk?"● Nahrát znovu":"● Nahrát zvuk";$("zvuk-btn").classList.toggle("on",!!zrec);
+  $("video-btn").textContent=vrec?"■ Stop – natáčím":video?"● Natočit znovu":"● Natočit video";$("video-btn").classList.toggle("on",!!vrec);
+  $("video-zive").hidden=!vrec;$("zvuk-btn").disabled=!!vrec;$("video-btn").disabled=!!zrec;stavUloz()}
+function typZaznamu(druh){if(!window.MediaRecorder)return "";
+  const k=druh==="audio"?["audio/mp4","audio/webm;codecs=opus","audio/webm"]:["video/mp4","video/webm;codecs=vp8,opus","video/webm"];
+  return k.find(t=>MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(t))||""}
+async function nahraj(druh){
+  if(!navigator.mediaDevices||!window.MediaRecorder)throw new Error("tento prohlížeč neumí nahrávat");
+  const st=await navigator.mediaDevices.getUserMedia(druh==="audio"?{audio:true}:{audio:true,video:{facingMode:"environment",width:{ideal:640},height:{ideal:360},frameRate:{ideal:15}}});
+  const mt=typZaznamu(druh),opt=druh==="audio"?{audioBitsPerSecond:32000}:{videoBitsPerSecond:400000,audioBitsPerSecond:32000};if(mt)opt.mimeType=mt;
+  let r;try{r=new MediaRecorder(st,opt)}catch(e){r=new MediaRecorder(st)}
+  const ch=[];r.ondataavailable=e=>{if(e.data&&e.data.size)ch.push(e.data)};
+  r.onstop=()=>{st.getTracks().forEach(t=>t.stop());const b=new Blob(ch,{type:r.mimeType||mt||(druh==="audio"?"audio/mp4":"video/mp4")});
+    if(druh==="audio"){zrec=null;nastavZvuk(b)}else{vrec=null;$("video-zive").srcObject=null;nastavVideo(b)}};
+  if(druh==="video"){$("video-zive").srcObject=st;$("video-zive").play().catch(()=>{})}
+  r.start(1000);return r}
+async function uloz(){
+  if(ukladam)return;ukladam=true;stavUloz();
+  try{
+    const o=S.cur.oblast,p=S.cur.pol[o]||"",d=udaje(),t=$("text").value.trim();
+    const pol=p?(najdiObl(o).polozky.find(x=>x.nazev===p)):null;
+    const klic=o+"|"+p,poradi=1+Math.max(S.pocitadla[klic]||0,0,...S.zaznamy.filter(r=>r.oblast===o&&r.polozka===p).map(r=>r.poradi));
+    const cas=prahaISO(),zakl=razitko(cas)+"_"+slug(p||o)+"_"+String(poradi).padStart(3,"0");
+    const fotky=[];
+    for(let i=0;i<fot.length;i++){const n=zakl+(fot.length>1?"_"+(i+1):"")+".jpg";await mSet(n,fot[i].blob);fotky.push(n)}
+    let zv="",vi="";
+    if(zvuk){zv=zakl+pripona(zvuk.blob.type,"audio");await mSet(zv,zvuk.blob)}
+    if(video){vi=zakl+pripona(video.blob.type,"video");await mSet(vi,video.blob)}
+    const g=gpsNyni();
+    S.zaznamy.push({id:uuid(),poradi,cas,gps:g?{lat:g.lat,lon:g.lon,presnost:g.presnost}:null,oblast:o,polozka:p,ucel:pol?pol.ucel:"",
+      druh:S.cur.druh,stitek:S.cur.stitek,...d,text:t,fotky,zvuk:zv,video:vi,odeslano:"",smazanaMedia:false});
+    S.pocitadla[klic]=poradi;
+    if(d.osoba){const L=najdiObl("Lidé");if(L&&!L.polozky.some(q=>q.nazev===d.osoba))L.polozky.push(P(d.osoba))}
+    if(!(await zapis())){S.zaznamy.pop();return}
+    fot.forEach(x=>URL.revokeObjectURL(x.url));fot=[];nastavZvuk(null);nastavVideo(null);
+    for(const i of ["text","hodnota","sirka","vyska","osoba","termin"])$(i).value="";
+    kresliFotky();pocet();toast("Uloženo: "+(p||o)+" č. "+poradi+(g?"":" (bez GPS)"));trvale();
+  }catch(e){toast("Neuloženo: "+e.message,5000)}
+  finally{ukladam=false;kresliPorizeni()}
+}
+async function pridejNove(){
+  const n=$("nov-nazev").value.trim().replace(/\|/g,"/");if(!n){$("nov-nazev").focus();return}
+  const o=obl();
+  if(novy==="oblast"){if(najdiObl(n)){toast("Oblast už existuje");return}S.oblasti.push({nazev:n,stitky:[],polozky:[]});S.cur.oblast=n}
+  else if(novy==="stitek"){if(o.stitky.includes(n)){toast("Štítek už existuje");return}o.stitky.push(n);S.cur.stitek=n}
+  else{if(o.polozky.some(p=>p.nazev===n)){toast("Už existuje");return}o.polozky.push(P(n,o.nazev==="Zakázky"?$("nov-ucel").value:""));S.cur.pol[o.nazev]=n}
+  $("nov-nazev").value="";novy=null;await zapis();kresliPorizeni();toast("Přidáno")}
+
+/* ---------- PŘEHLED ---------- */
+let urls=[];
+function kresliPrehled(){
+  urls.forEach(u=>URL.revokeObjectURL(u));urls=[];
+  const f=$("filtr").value||"";
+  let h=`<option value="">Vše</option>`;
+  for(const o of S.oblasti){h+=`<option value="${esc(o.nazev)}"${f===o.nazev?" selected":""}>${esc(o.nazev)} – vše</option>`;
+    for(const p of o.polozky){const v=o.nazev+"|"+p.nazev;
+      h+=`<option value="${esc(v)}"${f===v?" selected":""}>  ${esc(p.nazev)}${p.ucel?" · "+esc(p.ucel):""}${p.uzavrena?" · uzavřeno":""}</option>`}}
+  $("filtr").innerHTML=h;
+  const [fo,fp]=f.split("|"),pp=fp!==undefined&&(najdiObl(fo)||{polozky:[]}).polozky.find(p=>p.nazev===fp);
+  $("pol-uzavrit").hidden=!pp;if(pp)$("pol-uzavrit").textContent=pp.uzavrena?"Otevřít":"Uzavřít";
+  const r=S.zaznamy.filter(x=>!f||(x.oblast===fo&&(fp===undefined||x.polozka===fp))).sort((a,b)=>b.cas.localeCompare(a.cas));
+  let s="",den="";
+  for(const x of r){const d=x.cas.slice(0,10);
+    if(d!==den){den=d;s+=`<div class="day">${datumCZ(x.cas)}</div>`}
+    const dn=(DRUH.find(k=>k[0]===x.druh)||[0,x.druh])[1];
+    const dl=[x.hodnota_m!==""&&x.hodnota_m!=null?`${esc(x.velicina)} ${String(x.hodnota_m).replace(".",",")} m`:"",
+      (x.sirka_mm!==""||x.vyska_mm!=="")?`okno ${x.sirka_mm||"?"} × ${x.vyska_mm||"?"} mm`:"",
+      x.osoba?`s kým: ${esc(x.osoba)}`:"",x.termin?`termín ${datumCZ(x.termin)}`:""].filter(Boolean).join(" · ");
+    const th=x.fotky.length&&!x.smazanaMedia?`<button type="button" class="th" data-lupa="${esc(x.fotky[0])}"><img class="th" data-m="${esc(x.fotky[0])}" alt="Fotka" style="border:none"></button>`
+      :`<div class="th">${x.smazanaMedia&&maMedia(x)?"média v Infoc":x.video?"video":x.zvuk?"zvuk":"bez fotky"}</div>`;
+    const ak=[];
+    if(!x.smazanaMedia){if(x.fotky.length>1)ak.push(`<button type="button" data-fotky="${esc(x.id)}">Fotky (${x.fotky.length})</button>`);
+      if(x.zvuk)ak.push(`<button type="button" data-hraj="${esc(x.zvuk)}" data-typ="audio">▶ Zvuk</button>`);
+      if(x.video)ak.push(`<button type="button" data-hraj="${esc(x.video)}" data-typ="video">▶ Video</button>`)}
+    ak.push(`<button type="button" class="del" data-del="${esc(x.id)}">${mazat===x.id?"Opravdu smazat?":"Smazat"}</button>`);
+    s+=`<div class="rec">${th}<div>
+      <div class="meta"><span>${x.cas.slice(11,16)}</span><span class="tag">${esc(dn)}</span><span>${esc(x.oblast)}${x.polozka?" › "+esc(x.polozka):""} č. ${x.poradi}</span>${x.stitek?`<span>#${esc(x.stitek)}</span>`:""}${x.gps?"<span>GPS</span>":""}${x.odeslano?'<span class="pill ok">✓ v Infoc</span>':'<span class="pill">neodesláno</span>'}</div>
+      ${dl?`<div><strong>${dl}</strong></div>`:""}<div class="txt">${esc(x.text)||(dl?"":'<span class="small">bez poznámky</span>')}</div>
+      <div class="akce">${ak.join("")}</div></div></div>`}
+  $("seznam").innerHTML=s||`<p class="small">Zatím žádné záznamy. Pořiďte první na záložce Pořídit.</p>`;
+  $("seznam").querySelectorAll("img[data-m]").forEach(async im=>{try{const b=await mGet(im.dataset.m);if(b){const u=URL.createObjectURL(b);urls.push(u);im.src=u}}catch(e){}});
+}
+async function prehrat(btn){
+  const b=await mGet(btn.dataset.hraj).catch(()=>null);if(!b){toast("Soubor v telefonu není");return}
+  const el=document.createElement(btn.dataset.typ);el.controls=true;if(el.playsInline!==undefined)el.playsInline=true;el.style.width="100%";
+  const u=URL.createObjectURL(b);urls.push(u);el.src=u;btn.closest(".akce").after(el);btn.remove();el.play().catch(()=>{})}
+async function lupa(name){const b=await mGet(name).catch(()=>null);if(!b)return;const u=URL.createObjectURL(b);urls.push(u);$("lupa-img").src=u;$("lupa").hidden=false}
+async function smazZaznam(id){const x=S.zaznamy.find(z=>z.id===id);if(!x)return;
+  S.zaznamy=S.zaznamy.filter(z=>z.id!==id);await zapis();
+  for(const n of [...x.fotky,x.zvuk,x.video].filter(Boolean))await mDel(n).catch(()=>{});
+  pocet();toast("Smazáno")}
+
+/* ---------- export: JSON, CSV, ZIP ---------- */
+function davka(zz,chybi){return {format:"zambu-1",aplikace:"ZAMBU "+VERZE,vytvoreno:prahaISO(),casove_pasmo:"Europe/Prague",pocet:zz.length,
+  chybejici_media:chybi||[],
+  zaznamy:zz.map(x=>({id:x.id,poradi:x.poradi,cas:x.cas,gps:x.gps,oblast:x.oblast,polozka:x.polozka,ucel:x.ucel||"",druh:x.druh,stitek:x.stitek,
+    mereni:x.hodnota_m!==""&&x.hodnota_m!=null?{velicina:x.velicina,hodnota_m:x.hodnota_m}:null,
+    okno:(x.sirka_mm!==""||x.vyska_mm!=="")?{sirka_mm:x.sirka_mm===""?null:x.sirka_mm,vyska_mm:x.vyska_mm===""?null:x.vyska_mm}:null,
+    osoba:x.osoba||"",termin:x.termin||"",text:x.text,fotky:x.fotky,zvuk:x.zvuk||"",video:x.video||""}))}}
+function csv(zz){const q=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  return "﻿"+["id;poradi;cas;gps_lat;gps_lon;gps_presnost_m;oblast;polozka;ucel;druh;stitek;velicina;hodnota_m;sirka_mm;vyska_mm;osoba;termin;text;fotky;zvuk;video"].concat(zz.map(x=>
+    [x.id,x.poradi,x.cas,x.gps?x.gps.lat:"",x.gps?x.gps.lon:"",x.gps?x.gps.presnost:"",x.oblast,x.polozka,x.ucel||"",x.druh,x.stitek,x.velicina,
+     String(x.hodnota_m??"").replace(".",","),x.sirka_mm,x.vyska_mm,x.osoba,x.termin,x.text,x.fotky.join("|"),x.zvuk,x.video].map(q).join(";"))).join("\r\n")}
+const enc=new TextEncoder();
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function zip(soubory){/* ZIP bez komprese; soubory [{name,data:Uint8Array}] */
+  const d=new Date(),dt=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xFFFF,dd=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF;
+  const casti=[],cd=[];let off=0;
+  for(const f of soubory){const n=enc.encode(f.name),c=crc32(f.data),h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(8,0,true);h.setUint16(10,dt,true);h.setUint16(12,dd,true);
+    h.setUint32(14,c,true);h.setUint32(18,f.data.length,true);h.setUint32(22,f.data.length,true);h.setUint16(26,n.length,true);h.setUint16(28,0,true);
+    casti.push(h,n,f.data);
+    const e=new DataView(new ArrayBuffer(46));e.setUint32(0,0x02014b50,true);e.setUint16(4,20,true);e.setUint16(6,20,true);e.setUint16(8,0x0800,true);e.setUint16(10,0,true);
+    e.setUint16(12,dt,true);e.setUint16(14,dd,true);e.setUint32(16,c,true);e.setUint32(20,f.data.length,true);e.setUint32(24,f.data.length,true);e.setUint16(28,n.length,true);
+    e.setUint32(42,off,true);cd.push(e,n);off+=30+n.length+f.data.length}
+  const cdSize=cd.reduce((s,x)=>s+x.byteLength,0),k=new DataView(new ArrayBuffer(22));
+  k.setUint32(0,0x06054b50,true);k.setUint16(8,soubory.length,true);k.setUint16(10,soubory.length,true);k.setUint32(12,cdSize,true);k.setUint32(16,off,true);
+  return new Blob([...casti,...cd,k],{type:"application/zip"})}
+async function medium(zz){const jmena=[...new Set(zz.flatMap(x=>x.smazanaMedia?[]:[...x.fotky,x.zvuk,x.video].filter(Boolean)))],out=[],chybi=[];
+  for(const n of jmena){const b=await mGet(n).catch(()=>null);if(b)out.push({name:n,blob:b});else chybi.push(n)}return {out,chybi}}
+async function zalohaZip(vse){
+  const zz=vse?S.zaznamy.slice():neodeslane();if(!zz.length){toast("Není co zálohovat");return}
+  toast("Připravuji ZIP…",10000);
+  try{const {out,chybi}=await medium(zz);const jm="zambu_"+razitko(prahaISO())+".zip";
+    const soubory=[{name:"zaznamy.json",data:enc.encode(JSON.stringify(davka(zz,chybi),null,1))},{name:"zaznamy.csv",data:enc.encode(csv(zz))}];
+    for(const m of out)soubory.push({name:m.name,data:new Uint8Array(await m.blob.arrayBuffer())});
+    const blob=zip(soubory),file=new File([blob],jm,{type:"application/zip"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:jm});toast("ZIP předán ("+mb(blob.size)+")");return}catch(e){if(e.name==="AbortError"){toast("Zrušeno");return}}}
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=jm;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},5000);toast("ZIP stažen ("+mb(blob.size)+")");
+  }catch(e){toast("ZIP se nepodařil: "+e.message,5000)}}
+
+/* ---------- odeslání do Infoc (GitHub, jeden commit na dávku) ---------- */
+function chybaGH(s,m){
+  if(s===401)return "klíč neplatí nebo vypršel – vytvořte nový";
+  if(s===403)return "klíč nemá právo zápisu (Contents: Read and write)"+(m?" – "+m:"");
+  if(s===404)return "repozitář nenalezen – zkontrolujte název a že ho klíč smí vidět";
+  if(s===409)return "repozitář je prázdný";
+  if(s===413)return "soubor je pro GitHub příliš velký";
+  if(s===422)return "GitHub zápis odmítl"+(m?" – "+m:"");
+  return "GitHub hlásí chybu "+s+(m?" – "+m:"")}
+async function gh(cesta,opt={}){
+  let r;try{r=await fetch("https://api.github.com"+cesta,{method:opt.method||"GET",body:opt.body,cache:"no-store",
+    headers:{"Accept":"application/vnd.github+json","Authorization":"Bearer "+TOKEN,"X-GitHub-Api-Version":"2022-11-28",...(opt.body?{"Content-Type":"application/json"}:{})}})}
+  catch(e){const er=new Error("bez spojení s GitHubem");er.sit=true;throw er}
+  const exp=r.headers.get("github-authentication-token-expiration");if(exp)S.infoc.platnost=exp;
+  if(!r.ok){let m="";try{m=(await r.json()).message||""}catch(e){}const er=new Error(chybaGH(r.status,m));er.status=r.status;throw er}
+  return r.status===204?null:r.json()}
+const b64=blob=>new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]||"");fr.onerror=()=>rej(fr.error);fr.readAsDataURL(blob)});
+function stavOdes(t,cls){$("odes-stav").innerHTML=cls?`<span class="${cls}">${esc(t)}</span>`:esc(t)}
+async function overSpojeni(){
+  const info=await gh(`/repos/${S.infoc.repo}`);
+  if(!info.private)throw new Error("repozitář není soukromý – odesílání zastaveno");
+  S.infoc.overeno=prahaISO();await zapis();return info}
+async function odeslat(){
+  if(odesilam)return;const zz=neodeslane();if(!zz.length){toast("Vše je odesláno");return}
+  if(!TOKEN){stavOdes("Chybí klíč – vložte ho níže v Spojení s Infoc.","stav-chyba");return}
+  odesilam=true;$("odeslat").disabled=true;
+  try{
+    stavOdes("Ověřuji repozitář…");
+    const info=await overSpojeni(),vetev=info.default_branch,repo=S.infoc.repo;
+    const slozka="inbox/zambu/"+razitko(prahaISO());
+    const {out,chybi}=await medium(zz);
+    const strom=[];let i=0;const celkem=out.length+2;
+    for(const m of out){stavOdes(`Nahrávám ${++i}/${celkem}: ${m.name} (${mb(m.blob.size)})`);
+      if(m.blob.size>95*1048576)throw new Error(m.name+" je větší než 95 MB");
+      const b=await gh(`/repos/${repo}/git/blobs`,{method:"POST",body:JSON.stringify({content:await b64(m.blob),encoding:"base64"})});
+      strom.push({path:slozka+"/"+m.name,mode:"100644",type:"blob",sha:b.sha})}
+    for(const [jm,obsah] of [["zaznamy.json",JSON.stringify(davka(zz,chybi),null,1)],["zaznamy.csv",csv(zz)]]){stavOdes(`Nahrávám ${++i}/${celkem}: ${jm}`);
+      const b=await gh(`/repos/${repo}/git/blobs`,{method:"POST",body:JSON.stringify({content:obsah,encoding:"utf-8"})});
+      strom.push({path:slozka+"/"+jm,mode:"100644",type:"blob",sha:b.sha})}
+    let sha="";
+    for(let pokus=1;pokus<=3&&!sha;pokus++){stavOdes("Zapisuji do Infoc…");
+      const ref=await gh(`/repos/${repo}/git/ref/heads/${encodeURIComponent(vetev)}`);
+      const c=await gh(`/repos/${repo}/git/commits/${ref.object.sha}`);
+      const t=await gh(`/repos/${repo}/git/trees`,{method:"POST",body:JSON.stringify({base_tree:c.tree.sha,tree:strom})});
+      const nc=await gh(`/repos/${repo}/git/commits`,{method:"POST",body:JSON.stringify({message:`ZAMBU: ${zaz(zz.length)} (${slozka.split("/").pop()})`,tree:t.sha,parents:[ref.object.sha]})});
+      try{await gh(`/repos/${repo}/git/refs/heads/${encodeURIComponent(vetev)}`,{method:"PATCH",body:JSON.stringify({sha:nc.sha})});sha=nc.sha}
+      catch(e){if(e.status!==422||pokus===3)throw e}}
+    const id=new Set(zz.map(x=>x.id));S.zaznamy.forEach(x=>{if(id.has(x.id))x.odeslano=slozka});
+    S.odeslani.unshift({cas:prahaISO(),slozka,sha:sha.slice(0,7),pocet:zz.length,chybi:chybi.length});S.odeslani=S.odeslani.slice(0,20);
+    await zapis();pocet();
+    stavOdes(`Odesláno ${zaz(zz.length)} do ${slozka}`+(chybi.length?` (chybí ${chybi.length} souborů médií)`:""),"stav-ok");toast("Odesláno do Infoc");
+  }catch(e){stavOdes("Neodesláno: "+e.message+(e.sit?". Záznamy zůstávají v telefonu, zkuste to později.":""),"stav-chyba")}
+  finally{odesilam=false;kresliExport()}}
+
+async function kresliExport(){
+  const n=neodeslane().length,cel=S.zaznamy.length;
+  $("exp-stav").innerHTML=`V telefonu je <strong>${zaz(cel)}</strong>, z toho neodeslaných <strong>${n}</strong>.`;
+  $("odeslat").textContent=n?`Odeslat do Infoc (${n})`:"Vše je odesláno";$("odeslat").disabled=odesilam||!n;
+  $("repo").value=S.infoc.repo;$("token").value="";$("token").placeholder=TOKEN?"klíč je uložen v telefonu":"github_pat_…";
+  $("token-smaz").hidden=!TOKEN;
+  if(!$("spojeni").dataset.drz)$("spojeni").innerHTML=TOKEN?`Klíč uložen.${S.infoc.overeno?" Naposledy ověřeno "+datumCZ(S.infoc.overeno)+".":""}${S.infoc.platnost?" Platí do "+esc(S.infoc.platnost.slice(0,10))+".":""}`:"Klíč zatím není uložen.";
+  $("historie").innerHTML=S.odeslani.length?`<h2>Odesláno</h2>`+S.odeslani.slice(0,8).map(o=>`<div class="small">${datumCZ(o.cas)} ${o.cas.slice(11,16)} · ${zaz(o.pocet)} · <code>${esc(o.slozka)}</code></div>`).join(""):"";
+  const sm=S.zaznamy.filter(x=>x.odeslano&&!x.smazanaMedia&&maMedia(x)).length;
+  $("uvolnit").textContent=uvolnit?`Opravdu smazat média u ${zazG(sm)} z telefonu?`:`Smazat média odeslaných záznamů (${sm})`;$("uvolnit").disabled=!sm;
+  const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  $("instalace").hidden=!(ios&&!navigator.standalone&&!matchMedia("(display-mode: standalone)").matches);
+  $("verze").textContent="ZAMBU "+VERZE;
+  try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate(),p=navigator.storage.persisted?await navigator.storage.persisted():false;
+    $("misto").textContent=`Data ZAMBU zabírají ${mb(e.usage||0)}.`+(p?" Úložiště je trvalé.":"")}}catch(e){}
+}
+async function uvolnitMisto(){
+  if(!uvolnit){uvolnit=true;kresliExport();return}
+  uvolnit=false;let n=0;
+  for(const x of S.zaznamy)if(x.odeslano&&!x.smazanaMedia&&maMedia(x)){for(const m of [...x.fotky,x.zvuk,x.video].filter(Boolean))await mDel(m).catch(()=>{});x.smazanaMedia=true;n++}
+  await zapis();kresliExport();toast("Média smazána u "+zazG(n))}
+
+function pocet(){const n=neodeslane().length;$("nav-n").hidden=!n;$("nav-n").textContent=n}
+
+/* ---------- přepínání ---------- */
+let obrazovka="porizeni";
+function ukaz(s){obrazovka=s;for(const k of ["porizeni","prehled","export"])$("s-"+k).hidden=k!==s;
+  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.s===s));
+  mazat=null;uvolnit=false;vykresli();scrollTo(0,0)}
+function vykresli(){({porizeni:kresliPorizeni,prehled:kresliPrehled,export:kresliExport})[obrazovka]()}
+
+/* ---------- události ---------- */
+document.querySelector("nav").addEventListener("click",e=>{const b=e.target.closest("button");if(b)ukaz(b.dataset.s)});
+$("banner").onclick=()=>ukaz("export");
+$("oblasti").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+  if(!b.dataset.o){novy=novy==="oblast"?null:"oblast";kresliPorizeni();if(novy)$("nov-nazev").focus();return}
+  S.cur.oblast=b.dataset.o;novy=null;zapis();kresliPorizeni()};
+$("polozka").onchange=e=>{S.cur.pol[S.cur.oblast]=e.target.value;zapis();kresliPorizeni()};
+$("pol-nova").onclick=()=>{novy=novy==="polozka"?null:"polozka";kresliPorizeni();if(novy)$("nov-nazev").focus()};
+$("nov-uloz").onclick=pridejNove;
+$("nov-nazev").onkeydown=e=>{if(e.key==="Enter")pridejNove()};
+$("nov-zrus").onclick=()=>{novy=null;$("nov-nazev").value="";kresliPorizeni()};
+$("druh").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.cur.druh=b.dataset.d;zapis();kresliPorizeni()};
+$("stitky").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+  if(!b.dataset.t){novy=novy==="stitek"?null:"stitek";kresliPorizeni();if(novy)$("nov-nazev").focus();return}
+  S.cur.stitek=S.cur.stitek===b.dataset.t?"":b.dataset.t;zapis();kresliPorizeni()};
+$("velicina").onchange=e=>{S.cur.velicina=e.target.value;zapis()};
+$("velikost").onchange=e=>{S.cur.velikost=e.target.value;zapis()};
+for(const i of ["text","hodnota","sirka","vyska"])$(i).addEventListener("input",stavUloz);
+$("foto-kamera").onchange=e=>{const f=[...e.target.files];e.target.value="";pridejFotky(f)};
+$("foto-galerie").onchange=e=>{const f=[...e.target.files];e.target.value="";pridejFotky(f)};
+$("nahled").onclick=e=>{const b=e.target.closest("[data-fi]");if(b){const x=fot.splice(+b.dataset.fi,1)[0];if(x)URL.revokeObjectURL(x.url);kresliFotky()}};
+$("zvuk-btn").onclick=async()=>{if(zrec){zrec.stop();return}
+  try{zrec=await nahraj("audio");kresliRec()}catch(e){zrec=null;kresliRec();toast(e.name==="NotAllowedError"?"Mikrofon je zakázaný – povolte ho v nastavení":"Nahrávání nejde: "+e.message,4000)}};
+$("zvuk-soubor").onchange=e=>{const f=e.target.files[0];e.target.value="";if(f)nastavZvuk(f)};
+$("zvuk-pryc").onclick=()=>nastavZvuk(null);
+$("video-btn").onclick=async()=>{if(vrec){vrec.stop();return}
+  try{vrec=await nahraj("video");kresliRec()}catch(e){vrec=null;kresliRec();toast(e.name==="NotAllowedError"?"Kamera je zakázaná – povolte ji v nastavení":"Natáčení nejde: "+e.message,4000)}};
+$("video-soubor").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+  if(f.size>MAX_VIDEO){toast("Video má "+mb(f.size)+", limit je "+mb(MAX_VIDEO)+". Natočte ho přímo v ZAMBU.",4500);return}nastavVideo(f)};
+$("video-pryc").onclick=()=>nastavVideo(null);
+$("uloz").onclick=uloz;
+$("filtr").onchange=()=>{mazat=null;kresliPrehled()};
+$("pol-uzavrit").onclick=async()=>{const [fo,fp]=$("filtr").value.split("|");
+  const p=(najdiObl(fo)||{polozky:[]}).polozky.find(p=>p.nazev===fp);if(p){p.uzavrena=!p.uzavrena;await zapis();kresliPrehled()}};
+$("seznam").onclick=async e=>{
+  const h=e.target.closest("[data-hraj]");if(h){prehrat(h);return}
+  const l=e.target.closest("[data-lupa]");if(l){lupa(l.dataset.lupa);return}
+  const f=e.target.closest("[data-fotky]");if(f){const x=S.zaznamy.find(z=>z.id===f.dataset.fotky);if(!x)return;
+    const box=document.createElement("div");box.id="nahled";box.style.display="flex";
+    for(const n of x.fotky){const b=await mGet(n).catch(()=>null);if(!b)continue;const u=URL.createObjectURL(b);urls.push(u);
+      const d=document.createElement("button");d.type="button";d.className="nf";d.dataset.lupa=n;d.style.cssText="padding:0;border:none;background:none";d.innerHTML=`<img src="${u}" alt="">`;box.append(d)}
+    f.closest(".akce").after(box);f.remove();return}
+  const d=e.target.closest("[data-del]");if(!d)return;
+  if(mazat===d.dataset.del){mazat=null;await smazZaznam(d.dataset.del)}else mazat=d.dataset.del;kresliPrehled()};
+$("lupa").onclick=()=>{$("lupa").hidden=true;$("lupa-img").removeAttribute("src")};
+$("odeslat").onclick=odeslat;
+$("zip-neodes").onclick=()=>zalohaZip(false);
+$("zip-vse").onclick=()=>zalohaZip(true);
+$("uvolnit").onclick=uvolnitMisto;
+$("token-uloz").onclick=async()=>{
+  const repo=$("repo").value.trim().replace(/^https?:\/\/github\.com\//,"").replace(/\.git$/,"").replace(/\/+$/,"");
+  if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){toast("Repozitář zadejte jako vlastník/název");return}
+  S.infoc.repo=repo;const t=$("token").value.trim();if(t)TOKEN=t;
+  if(!TOKEN){toast("Vložte klíč");return}
+  const sp=$("spojeni");sp.dataset.drz="1";sp.textContent="Ověřuji…";
+  try{await kvSet("token",TOKEN);const info=await overSpojeni();
+    sp.innerHTML=`<span class="stav-ok">Spojení v pořádku.</span> Soukromý repozitář <code>${esc(info.full_name)}</code>, větev ${esc(info.default_branch)}.${S.infoc.platnost?" Klíč platí do "+esc(S.infoc.platnost.slice(0,10))+".":""}`}
+  catch(e){sp.innerHTML=`<span class="stav-chyba">Neověřeno: ${esc(e.message)}</span>`}
+  await zapis();delete sp.dataset.drz;$("token").value="";$("token").placeholder=TOKEN?"klíč je uložen v telefonu":"github_pat_…";$("token-smaz").hidden=!TOKEN};
+$("token-smaz").onclick=async()=>{TOKEN="";try{await tx("kv","readwrite",s=>s.delete("token"))}catch(e){}S.infoc.overeno="";S.infoc.platnost="";await zapis();kresliExport();toast("Klíč smazán")};
+window.addEventListener("beforeunload",e=>{if(zrec||vrec||fot.length||zvuk||video||$("text").value.trim()){e.preventDefault();e.returnValue=""}});
+
+/* ---------- start ---------- */
+(async()=>{
+  const ok=await otevriDB();
+  if(ok){try{const st=await kvGet("stav");if(st&&st.oblasti){S=Object.assign(vychozi(),st);S.cur=Object.assign(vychozi().cur,st.cur||{});S.infoc=Object.assign(vychozi().infoc,st.infoc||{})}
+    TOKEN=(await kvGet("token"))||""}catch(e){}}
+  else toast("Úložiště telefonu není dostupné – záznamy se neuloží",6000);
+  vykresli();pocet();gpsStart();
+  if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+})();
+</script>
+</body>
+</html>
