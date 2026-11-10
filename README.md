@@ -4,6 +4,8 @@ Mobilní webová aplikace (PWA) pro záznamy v terénu a po hovorech: fotky, poz
 
 Odesílá do soukromého repozitáře Infoc (`inbox/zambu/RRMMDD_HHMMSS/`, jeden commit na dávku) přes GitHub API s klíčem uloženým jen v telefonu. Záloha: ZIP se `zaznamy.json`, `zaznamy.csv` a médii, sdílením.
 
+Oblast Zakázky nabízí položky z číselníku Infoc `ciselniky/zakazky.json` (formát zakazky-1, řazení Živé, Nabídky, Usnulé); načítá se při spuštění a tlačítkem Obnovit zakázky, bez sítě platí poslední stažený. Novou zakázku z terénu aplikace zapíše bez čísla jako „NOVÁ objekt (klient)“, číslo přidělí PREZAK.
+
 Kód neobsahuje žádná osobní data ani klíč.
 
 ## Nasazení

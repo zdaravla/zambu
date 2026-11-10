@@ -185,6 +185,8 @@ nav button[aria-current=true]{color:var(--ink);border-top-color:var(--accent)}
         <input type="password" id="token" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…"></div>
       <div class="row"><button id="token-uloz" type="button" style="flex:1">Uložit a ověřit</button><button id="token-smaz" type="button" class="quiet" style="color:var(--danger)">Smazat klíč</button></div>
       <div id="spojeni" class="small" role="status"></div>
+      <div class="row"><button id="zak-obnov" type="button" style="flex:1">Obnovit zakázky</button></div>
+      <div id="zak-stav" class="small" role="status"></div>
       <details>
         <summary class="small" style="cursor:pointer">Jak vytvořit klíč</summary>
         <ol style="margin-top:8px">
@@ -211,7 +213,7 @@ nav button[aria-current=true]{color:var(--ink);border-top-color:var(--accent)}
 
 <script>
 "use strict";
-const VERZE="1.2 (10. 11. 2026)";
+const VERZE="1.3 (10. 11. 2026)";
 /* při psaní (klávesnice) skrýt spodní lištu, aby neskákala */
 const jePole=e=>e&&e.matches&&e.matches("input:not([type=file]):not([type=checkbox]),textarea,select");
 document.addEventListener("focusin",e=>{if(jePole(e.target))document.body.classList.add("pise")});
@@ -234,11 +236,20 @@ function vychozi(){return {verze:1,
    {nazev:"Lidé",stitky:["slib","kontakt"],polozky:[]}],
   zaznamy:[],pocitadla:{},odeslani:[],
   cur:{oblast:"Zakázky",pol:{},druh:"poznamka",stitek:"",velikost:"1280",velicina:VELICINY[0]},
-  infoc:{repo:"zdaravla/infoc",overeno:"",platnost:""}}}
+  infoc:{repo:"zdaravla/infoc",overeno:"",platnost:""},
+  ciselnik:{stazeno:"",vytvoreno:"",zakazky:[]}}}
 let S=vychozi(), TOKEN="";
 let fot=[], zvuk=null, video=null, zrec=null, vrec=null, novy=null, mazat=null, ukladam=false, odesilam=false, uvolnit=false;
 const najdiObl=n=>S.oblasti.find(o=>o.nazev===n);
 const obl=()=>najdiObl(S.cur.oblast)||S.oblasti[0];
+/* zakázky z číselníku Infoc (ciselniky/zakazky.json, formát zakazky-1) + ručně přidané „NOVÁ …“ */
+const AKT={"Živá":0,"Nabídka":1,"Usnulá":2},AKT_SK={"Živá":"Živé","Nabídka":"Nabídky","Usnulá":"Usnulé"};
+function zakazkyCis(){return ((S.ciselnik||{}).zakazky||[]).filter(z=>z&&z.polozka)
+  .map(z=>({nazev:String(z.polozka),ucel:z.ucel||"",aktivita:z.aktivita||"",cis:true,uzavrena:false}))
+  .sort((a,b)=>((AKT[a.aktivita]??3)-(AKT[b.aktivita]??3))||a.nazev.localeCompare(b.nazev,"cs"))}
+function polozkyObl(o){if(!o)return[];if(o.nazev!=="Zakázky")return o.polozky;
+  const c=zakazkyCis(),j=new Set(c.map(p=>p.nazev));return c.concat(o.polozky.filter(p=>!j.has(p.nazev)))}
+const najdiPol=(o,n)=>polozkyObl(o).find(p=>p.nazev===n);
 
 /* ---------- úložiště: IndexedDB (kv = stav, media = soubory) ---------- */
 let db=null;
@@ -299,10 +310,13 @@ function kresliPorizeni(){
   const o=obl();S.cur.oblast=o.nazev;
   $("oblasti").innerHTML=S.oblasti.map(x=>`<button type="button" data-o="${esc(x.nazev)}" aria-pressed="${x===o}">${esc(x.nazev)}</button>`).join("")
     +`<button type="button" data-o="" aria-label="Přidat oblast">＋</button>`;
-  const otevrene=o.polozky.filter(p=>!p.uzavrena);
+  const otevrene=polozkyObl(o).filter(p=>!p.uzavrena);
   let cp=S.cur.pol[o.nazev]||"";if(!otevrene.some(p=>p.nazev===cp))cp=S.cur.pol[o.nazev]="";
   $("pol-lbl").textContent=o.nazev==="Zakázky"?"Zakázka":o.nazev==="Lidé"?"Osoba":"Položka";
-  $("polozka").innerHTML=`<option value="">— obecně, bez položky —</option>`+otevrene.map(p=>`<option value="${esc(p.nazev)}"${p.nazev===cp?" selected":""}>${esc(p.nazev)}${p.ucel?" · "+esc(p.ucel):""}</option>`).join("");
+  const opt=p=>`<option value="${esc(p.nazev)}"${p.nazev===cp?" selected":""}>${esc(p.nazev)}${p.ucel?" · "+esc(p.ucel):""}</option>`;
+  let moz;if(o.nazev==="Zakázky"){const g={};for(const p of otevrene){const k=p.cis?(AKT_SK[p.aktivita]||"Ostatní"):"Přidané v terénu";(g[k]=g[k]||[]).push(p)}
+    moz=Object.entries(g).map(([k,v])=>`<optgroup label="${esc(k)}">${v.map(opt).join("")}</optgroup>`).join("")}else moz=otevrene.map(opt).join("");
+  $("polozka").innerHTML=`<option value="">— obecně, bez položky —</option>`+moz;
   $("druh").innerHTML=DRUH.map(([k,n])=>`<button type="button" data-d="${k}" aria-pressed="${k===S.cur.druh}">${n}</button>`).join("");
   if(!o.stitky.includes(S.cur.stitek))S.cur.stitek="";
   $("stitky").innerHTML=o.stitky.map(s=>`<button type="button" data-t="${esc(s)}" aria-pressed="${s===S.cur.stitek}">${esc(s)}</button>`).join("")
@@ -313,15 +327,15 @@ function kresliPorizeni(){
   $("lide").innerHTML=(najdiObl("Lidé")||{polozky:[]}).polozky.map(p=>`<option value="${esc(p.nazev)}"></option>`).join("");
   $("velikost").value=S.cur.velikost;
   /* checklist obhlídky */
-  const pol=cp&&o.polozky.find(p=>p.nazev===cp), ch=pol&&CHECKLIST[pol.ucel];
+  const pol=cp&&najdiPol(o,cp), ch=pol&&CHECKLIST[pol.ucel];
   if(ch){const ma=new Set(S.zaznamy.filter(x=>x.oblast===o.nazev&&x.polozka===cp).map(x=>x.stitek));
     const chybi=ch.filter(s=>!ma.has(s));
     $("chybi").innerHTML=chybi.length?`${esc(pol.ucel)} – ještě chybí: <b>${chybi.map(esc).join(", ")}</b>`:`${esc(pol.ucel)} – vše z kontrolního seznamu je pořízeno.`;
     $("chybi").hidden=false}else $("chybi").hidden=true;
   /* formulář přidání */
   $("nov-form").hidden=!novy;
-  if(novy){$("nov-lbl").textContent=novy==="oblast"?"Nová oblast":novy==="stitek"?"Nový štítek v oblasti "+o.nazev:(o.nazev==="Zakázky"?"Nová zakázka (číslo akce a název)":"Nová položka v oblasti "+o.nazev);
-    $("nov-nazev").placeholder=novy==="polozka"&&o.nazev==="Zakázky"?"např. 2026_220 Mladých 211":"";
+  if(novy){$("nov-lbl").textContent=novy==="oblast"?"Nová oblast":novy==="stitek"?"Nový štítek v oblasti "+o.nazev:(o.nazev==="Zakázky"?"Nová zakázka – bez čísla, číslo přidělí PREZAK":"Nová položka v oblasti "+o.nazev);
+    $("nov-nazev").placeholder=novy==="polozka"&&o.nazev==="Zakázky"?"objekt (klient)":"";
     $("nov-ucel-row").hidden=!(novy==="polozka"&&o.nazev==="Zakázky")}
   banner();stavUloz();
 }
@@ -373,7 +387,7 @@ async function uloz(){
   if(ukladam)return;ukladam=true;stavUloz();
   try{
     const o=S.cur.oblast,p=S.cur.pol[o]||"",d=udaje(),t=$("text").value.trim();
-    const pol=p?(najdiObl(o).polozky.find(x=>x.nazev===p)):null;
+    const pol=p?najdiPol(najdiObl(o),p):null;
     const klic=o+"|"+p,poradi=1+Math.max(S.pocitadla[klic]||0,0,...S.zaznamy.filter(r=>r.oblast===o&&r.polozka===p).map(r=>r.poradi));
     const cas=prahaISO(),zakl=razitko(cas)+"_"+slug(p||o)+"_"+String(poradi).padStart(3,"0");
     const fotky=[];
@@ -398,7 +412,14 @@ async function pridejNove(){
   const o=obl();
   if(novy==="oblast"){if(najdiObl(n)){toast("Oblast už existuje");return}S.oblasti.push({nazev:n,stitky:[],polozky:[]});S.cur.oblast=n}
   else if(novy==="stitek"){if(o.stitky.includes(n)){toast("Štítek už existuje");return}o.stitky.push(n);S.cur.stitek=n}
-  else{if(o.polozky.some(p=>p.nazev===n)){toast("Už existuje");return}o.polozky.push(P(n,o.nazev==="Zakázky"?$("nov-ucel").value:""));S.cur.pol[o.nazev]=n}
+  else{let m=n,zprava="Přidáno";
+    if(o.nazev==="Zakázky"&&!zakazkyCis().some(p=>p.nazev===m)){
+      if(/^\d{4}_\d{3}/.test(m)){m=m.replace(/^\d{4}_\d{3}[\s_]*/,"");zprava="Přidáno bez čísla – číslo přidělí PREZAK"}
+      m=m.replace(/^NOV[ÁA]\s*/i,"").trim();if(!m){$("nov-nazev").focus();return}m="NOVÁ "+m}
+    const c=polozkyObl(o).find(p=>p.nazev===m);
+    if(c){if(c.uzavrena){toast("Už existuje (uzavřená)");return}S.cur.pol[o.nazev]=m;zprava="Vybráno"}
+    else{o.polozky.push(P(m,o.nazev==="Zakázky"?$("nov-ucel").value:""));S.cur.pol[o.nazev]=m}
+    $("nov-nazev").value="";novy=null;await zapis();kresliPorizeni();toast(zprava,3500);return}
   $("nov-nazev").value="";novy=null;await zapis();kresliPorizeni();toast("Přidáno")}
 
 /* ---------- PŘEHLED ---------- */
@@ -408,7 +429,7 @@ function kresliPrehled(){
   const f=$("filtr").value||"";
   let h=`<option value="">Vše</option>`;
   for(const o of S.oblasti){h+=`<option value="${esc(o.nazev)}"${f===o.nazev?" selected":""}>${esc(o.nazev)} – vše</option>`;
-    for(const p of o.polozky){const v=o.nazev+"|"+p.nazev;
+    for(const p of polozkyObl(o).filter(p=>!p.cis||S.zaznamy.some(x=>x.oblast===o.nazev&&x.polozka===p.nazev))){const v=o.nazev+"|"+p.nazev;
       h+=`<option value="${esc(v)}"${f===v?" selected":""}>  ${esc(p.nazev)}${p.ucel?" · "+esc(p.ucel):""}${p.uzavrena?" · uzavřeno":""}</option>`}}
   $("filtr").innerHTML=h;
   const [fo,fp]=f.split("|"),pp=fp!==undefined&&(najdiObl(fo)||{polozky:[]}).polozky.find(p=>p.nazev===fp);
@@ -508,6 +529,20 @@ async function overSpojeni(){
   const info=await gh(`/repos/${S.infoc.repo}`);
   if(!info.private)throw new Error("repozitář není soukromý – odesílání zastaveno");
   S.infoc.overeno=prahaISO();await zapis();return info}
+let zakChyba="",zakNacitam=false;
+async function nactiZakazky(rucne){
+  if(zakNacitam)return;
+  if(!TOKEN){if(rucne){zakChyba="Chybí klíč – vložte ho výše.";kresliExport()}return}
+  zakNacitam=true;if(rucne){zakChyba="";$("zak-stav").textContent="Stahuji zakázky…";$("zak-obnov").disabled=true}
+  try{const f=await gh(`/repos/${S.infoc.repo}/contents/ciselniky/zakazky.json`);
+    const bin=atob(String(f.content||"").replace(/\s/g,""));
+    const d=JSON.parse(new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0))));
+    if(d.format!=="zakazky-1"||!Array.isArray(d.zakazky))throw new Error("neznámý formát číselníku");
+    S.ciselnik={stazeno:prahaISO(),vytvoreno:d.vytvoreno||"",zakazky:d.zakazky.filter(z=>z&&z.polozka)
+      .map(z=>({cislo:String(z.cislo||""),polozka:String(z.polozka),ucel:String(z.ucel||""),aktivita:String(z.aktivita||"")}))};
+    zakChyba="";await zapis();if(rucne)toast("Zakázky obnoveny ("+S.ciselnik.zakazky.length+")")}
+  catch(e){if(rucne)zakChyba="Neobnoveno: "+e.message+(S.ciselnik.stazeno?". Používám poslední stažené.":".")}
+  finally{zakNacitam=false;kresliPorizeni();kresliExport()}}
 async function odeslat(){
   if(odesilam)return;const zz=neodeslane();if(!zz.length){toast("Vše je odesláno");return}
   if(!TOKEN){stavOdes("Chybí klíč – vložte ho níže v Spojení s Infoc.","stav-chyba");return}
@@ -553,6 +588,9 @@ async function kresliExport(){
   const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
   $("instalace").hidden=!(ios&&!navigator.standalone&&!matchMedia("(display-mode: standalone)").matches);
   $("verze").textContent="ZAMBU "+VERZE;
+  {const c=S.ciselnik||{};$("zak-obnov").disabled=zakNacitam||!TOKEN;
+   if(!zakNacitam)$("zak-stav").innerHTML=zakChyba?`<span class="stav-chyba">${esc(zakChyba)}</span>`:
+     c.stazeno?`Zakázek v nabídce: ${(c.zakazky||[]).length}, staženo ${datumCZ(c.stazeno)} ${c.stazeno.slice(11,16)}.`:"Zakázky z Infoc zatím nestaženy."}
   try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate(),p=navigator.storage.persisted?await navigator.storage.persisted():false;
     $("misto").textContent=`Data ZAMBU zabírají ${mb(e.usage||0)}.`+(p?" Úložiště je trvalé.":"")}}catch(e){}
 }
@@ -627,9 +665,10 @@ $("token-uloz").onclick=async()=>{
   if(!TOKEN){toast("Vložte klíč");return}
   const sp=$("spojeni");sp.dataset.drz="1";sp.textContent="Ověřuji…";
   try{await kvSet("token",TOKEN);const info=await overSpojeni();
-    sp.innerHTML=`<span class="stav-ok">Spojení v pořádku.</span> Soukromý repozitář <code>${esc(info.full_name)}</code>, větev ${esc(info.default_branch)}.${S.infoc.platnost?" Klíč platí do "+esc(S.infoc.platnost.slice(0,10))+".":""}`}
+    nactiZakazky(false);sp.innerHTML=`<span class="stav-ok">Spojení v pořádku.</span> Soukromý repozitář <code>${esc(info.full_name)}</code>, větev ${esc(info.default_branch)}.${S.infoc.platnost?" Klíč platí do "+esc(S.infoc.platnost.slice(0,10))+".":""}`}
   catch(e){sp.innerHTML=`<span class="stav-chyba">Neověřeno: ${esc(e.message)}</span>`}
   await zapis();delete sp.dataset.drz;$("token").value="";$("token").placeholder=TOKEN?"klíč je uložen v telefonu":"github_pat_…";$("token-smaz").hidden=!TOKEN};
+$("zak-obnov").onclick=()=>nactiZakazky(true);
 $("token-smaz").onclick=async()=>{TOKEN="";try{await tx("kv","readwrite",s=>s.delete("token"))}catch(e){}S.infoc.overeno="";S.infoc.platnost="";await zapis();kresliExport();toast("Klíč smazán")};
 window.addEventListener("beforeunload",e=>{if(zrec||vrec||fot.length||zvuk||video||$("text").value.trim()){e.preventDefault();e.returnValue=""}});
 
@@ -639,7 +678,7 @@ window.addEventListener("beforeunload",e=>{if(zrec||vrec||fot.length||zvuk||vide
   if(ok){try{const st=await kvGet("stav");if(st&&st.oblasti){S=Object.assign(vychozi(),st);S.cur=Object.assign(vychozi().cur,st.cur||{});S.infoc=Object.assign(vychozi().infoc,st.infoc||{})}
     TOKEN=(await kvGet("token"))||""}catch(e){}}
   else toast("Úložiště telefonu není dostupné – záznamy se neuloží",6000);
-  vykresli();pocet();gpsStart();
+  vykresli();pocet();gpsStart();nactiZakazky(false);
   if("serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))navigator.serviceWorker.register("sw.js").catch(()=>{});
 })();
 </script>
